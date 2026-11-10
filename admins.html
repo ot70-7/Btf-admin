@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <script>window.__AURA_CONFIG__={"network":"mainnet-beta","rpc":"https://solana-rpc.publicnode.com","token":{"name":"BUY THE FUTURE","symbol":"BTF","decimals":9,"supply":"1000000000","mint":"bWkp8s7e1AuYffULoa5arqzxgoymxK2SnhP79JPMUe8","projectWallet":"FW7zSDTrpYJhGuoy8nkABR77Kwzu2z8ovLdmR5WFthgs","description":"BTF — BUY THE FUTURE.\n\nBUY THE FUTURE. BUILD THE NEXT WORLD.\n\nBTF is more than a token. It represents a vision of a new digital future.\n\nWe believe the future is not something we wait for — it is something we build together.\n\nStarting with a community-driven digital asset, BTF aims to grow into a broader ecosystem through technology, innovation, and global participation.\n\nOur ambition is to build beyond a token: toward a connected digital economy, an independent network, and ultimately a new generation of blockchain infrastructure.\n\nOne Vision. One Community. One Future.\n\nBTF — BUY THE FUTURE.","logo":"assets/logo.png","logoUrl":"https://ot70-7.github.io/Btf/assets/logo.png","website":"https://ot70-7.github.io/Btf/","x":"","telegram":"https://t.me/buythefuture"},"staking":{"_comment":"programId is a placeholder. Replace it with the ID printed by `anchor keys sync` before any deploy.","programId":"2wfUZNSyWqsu7ZkyUeqSJWyZP62ohHWoN7tAHDA3Z6SN","minStake":"1","tiers":[{"key":"flex","label":"灵活质押","aprBps":300,"lockSecs":0,"capSecs":31536000},{"key":"d30","label":"30 天","aprBps":500,"lockSecs":2592000,"capSecs":2592000},{"key":"d90","label":"90 天","aprBps":800,"lockSecs":7776000,"capSecs":7776000},{"key":"d180","label":"180 天","aprBps":1200,"lockSecs":15552000,"capSecs":15552000},{"key":"d360","label":"360 天","aprBps":1500,"lockSecs":31104000,"capSecs":31104000}]},"distribution":[{"label":"初始流动性","pct":10,"wallet":""},{"label":"社区及生态","pct":10,"wallet":""},{"label":"质押奖励储备","pct":10,"wallet":""},{"label":"项目发展储备/长期质押","pct":50,"wallet":""},{"label":"社区激励","pct":20,"wallet":""}],"admin":"FW7zSDTrpYJhGuoy8nkABR77Kwzu2z8ovLdmR5WFthgs","admins":["FW7zSDTrpYJhGuoy8nkABR77Kwzu2z8ovLdmR5WFthgs"],"adminPassMint":"","adminSiteUrl":"https://ot70-7.github.io/Btf-admin/"};window.__AURA_BUILD__="ag2wua";</script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0d12" />
+    <title>BTF 管理员</title>
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app">
+      <span class="brand"><img src="./assets/logo.png" alt="BTF" width="22" height="22" /> 管理员</span>
+      <span class="spacer"></span>
+      <button class="btn btn--small" id="connect" type="button">连接钱包</button>
+    </header>
+
+    <main>
+      <p class="status" id="status">仅管理员可用。请连接带有管理凭证的钱包。</p>
+
+      <section class="card" id="gate">
+        <h2>仅限项目方管理员</h2>
+        <p class="small muted">
+          管理员身份有两种来源：仓库配置的地址名单，或持有「管理凭证」代币。都没有则无法进入。
+        </p>
+        <button class="btn" id="gate-connect" type="button">连接管理员钱包</button>
+        <p class="status" id="gate-status"></p>
+      </section>
+
+      <div id="admin-area" class="hide">
+        <section class="card stack">
+          <h2>当前管理员</h2>
+          <dl class="kv" id="admin-summary"></dl>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>地址</th><th>凭证</th></tr></thead>
+              <tbody id="admin-rows"></tbody>
+            </table>
+          </div>
+          <button class="btn btn--ghost btn--small" id="refresh" type="button">刷新</button>
+        </section>
+
+        <section class="card stack hide" id="init-card">
+          <h2>初始化管理凭证</h2>
+          <p class="small muted">
+            创建一个 0 位小数、总量 10 枚的凭证代币。持有 1 枚即视为管理员，之后可以把它转给新的管理员。
+          </p>
+          <button class="btn" id="init-pass" type="button">创建管理凭证</button>
+        </section>
+
+        <section class="card stack" id="add-card">
+          <h2>添加管理员</h2>
+          <label class="field">
+            新管理员钱包地址
+            <input id="new-admin" placeholder="粘贴 Solana 地址" />
+          </label>
+          <button class="btn" id="add-admin" type="button">转 1 枚凭证给他</button>
+          <p class="small muted">
+            对方需要自己签名接收吗？不需要：你转出即可生效。撤回权限需要他把凭证转回你的地址。
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <div id="toasts"></div>
+
+    <nav class="bottom">
+      <a href="./admin.html">总览</a>
+      <a href="./issuance.html">发行</a>
+      <a href="./revoke.html">撤销</a>
+      <a href="./airdrop.html">发放</a>
+      <a href="./admins.html" class="is-active">管理员</a>
+    </nav>
+
+    <script type="module" src="./admins.js?v=ag2wua"></script>
+  </body>
+</html>
