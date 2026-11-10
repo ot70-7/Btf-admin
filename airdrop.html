@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <script>window.__AURA_CONFIG__={"network":"mainnet-beta","rpc":"https://solana-rpc.publicnode.com","token":{"name":"BUY THE FUTURE","symbol":"BTF","decimals":9,"supply":"1000000000","mint":"bWkp8s7e1AuYffULoa5arqzxgoymxK2SnhP79JPMUe8","projectWallet":"FW7zSDTrpYJhGuoy8nkABR77Kwzu2z8ovLdmR5WFthgs","description":"BTF — BUY THE FUTURE.\n\nBUY THE FUTURE. BUILD THE NEXT WORLD.\n\nBTF is more than a token. It represents a vision of a new digital future.\n\nWe believe the future is not something we wait for — it is something we build together.\n\nStarting with a community-driven digital asset, BTF aims to grow into a broader ecosystem through technology, innovation, and global participation.\n\nOur ambition is to build beyond a token: toward a connected digital economy, an independent network, and ultimately a new generation of blockchain infrastructure.\n\nOne Vision. One Community. One Future.\n\nBTF — BUY THE FUTURE.","logo":"assets/logo.png","logoUrl":"https://ot70-7.github.io/Btf/assets/logo.png","website":"https://ot70-7.github.io/Btf/","x":"","telegram":"https://t.me/buythefuture"},"staking":{"_comment":"programId is a placeholder. Replace it with the ID printed by `anchor keys sync` before any deploy.","programId":"2wfUZNSyWqsu7ZkyUeqSJWyZP62ohHWoN7tAHDA3Z6SN","minStake":"1","tiers":[{"key":"flex","label":"灵活质押","aprBps":300,"lockSecs":0,"capSecs":31536000},{"key":"d30","label":"30 天","aprBps":500,"lockSecs":2592000,"capSecs":2592000},{"key":"d90","label":"90 天","aprBps":800,"lockSecs":7776000,"capSecs":7776000},{"key":"d180","label":"180 天","aprBps":1200,"lockSecs":15552000,"capSecs":15552000},{"key":"d360","label":"360 天","aprBps":1500,"lockSecs":31104000,"capSecs":31104000}]},"distribution":[{"label":"初始流动性","pct":10,"wallet":""},{"label":"社区及生态","pct":10,"wallet":""},{"label":"质押奖励储备","pct":10,"wallet":""},{"label":"项目发展储备/长期质押","pct":50,"wallet":""},{"label":"社区激励","pct":20,"wallet":""}],"admin":"FW7zSDTrpYJhGuoy8nkABR77Kwzu2z8ovLdmR5WFthgs","admins":["FW7zSDTrpYJhGuoy8nkABR77Kwzu2z8ovLdmR5WFthgs"],"adminPassMint":"","adminSiteUrl":"https://ot70-7.github.io/Btf-admin/"};window.__AURA_BUILD__="ag2wua";</script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0d12" />
+    <title>BTF 批量发放</title>
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app">
+      <span class="brand"><img src="./assets/logo.png" alt="BTF" width="22" height="22" /> 批量发放</span>
+      <span class="spacer"></span>
+      <button class="btn btn--small" id="connect" type="button">连接钱包</button>
+    </header>
+
+    <main>
+      <p class="status" id="status">仅管理员可用。先连接管理员钱包。</p>
+
+      <section class="card" id="gate">
+        <h2>仅限项目方管理员</h2>
+        <p class="small muted">批量发放会动用主钱包余额，仅管理员钱包可用。</p>
+        <button class="btn" id="gate-connect" type="button">连接管理员钱包</button>
+        <p class="status" id="gate-status"></p>
+      </section>
+
+      <div id="admin-area" class="hide">
+        <section class="card stack">
+          <h2>1. 读取持仓</h2>
+          <p class="small muted">
+            直接读链上代币账户，按持有人聚合。地址多时需要支持 getProgramAccounts 的 RPC。
+          </p>
+          <button class="btn btn--ghost" id="load-holders" type="button">读取全部持仓地址</button>
+          <details class="small muted">
+            <summary>RPC 不支持时：手动粘贴名单</summary>
+            <div class="stack" style="margin-top: 8px">
+              <textarea id="manual-list" rows="4" placeholder="每行：地址,数量&#10;例如：&#10;FW7z…thgs,1000&#10;9xQe…3nVb,250"></textarea>
+              <button class="btn btn--ghost btn--small" id="load-manual" type="button">使用手动名单</button>
+            </div>
+          </details>
+          <p class="small muted" id="holders-summary"></p>
+        </section>
+
+        <section class="card stack">
+          <h2>2. 筛选与方案</h2>
+          <label class="field">
+            最低持仓门槛（BTF，留空表示不限制）
+            <input id="threshold" inputmode="decimal" placeholder="例如 1000" />
+          </label>
+          <label class="field">
+            排除地址（每行一个，主钱包已自动排除）
+            <textarea id="exclude" rows="2" placeholder="可选"></textarea>
+          </label>
+          <label class="field">
+            发放方式
+            <select id="mode">
+              <option value="equal">等额：名单内每人相同</option>
+              <option value="proportional">按持仓比例</option>
+              <option value="fixed">固定每人数量</option>
+            </select>
+          </label>
+          <label class="field" id="budget-field">
+            发放总量（BTF）
+            <input id="budget" inputmode="decimal" placeholder="例如 100000" />
+          </label>
+          <label class="field hide" id="per-wallet-field">
+            每人数量（BTF）
+            <input id="per-wallet" inputmode="decimal" placeholder="例如 100" />
+          </label>
+          <label class="row small muted" style="gap: 8px">
+            <input type="checkbox" id="create-atas" style="width: auto" />
+            为没有代币账户的地址创建账户（每个约 0.00204 SOL）
+          </label>
+          <button class="btn" id="plan" type="button">生成方案与成本</button>
+        </section>
+
+        <section class="card stack">
+          <h2>3. 预览</h2>
+          <dl class="kv" id="plan-summary"></dl>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>#</th><th>地址</th><th>持仓</th><th>发放</th></tr>
+              </thead>
+              <tbody id="plan-rows"></tbody>
+            </table>
+          </div>
+          <button class="btn btn--ghost btn--small" id="export" type="button">导出 CSV</button>
+        </section>
+
+        <section class="card stack">
+          <h2>4. 执行</h2>
+          <p class="small muted">
+            每批 10 个地址，每批需要你在钱包里签名一次。中途可停止，已完成批次不会重复。
+          </p>
+          <button class="btn btn--danger" id="run" type="button" disabled>开始发放</button>
+          <div class="positions" id="progress"></div>
+        </section>
+      </div>
+    </main>
+
+    <div id="toasts"></div>
+
+    <nav class="bottom">
+      <a href="./admin.html">总览</a>
+      <a href="./issuance.html">发行</a>
+      <a href="./revoke.html">撤销</a>
+      <a href="./airdrop.html" class="is-active">发放</a>
+      <a href="./admins.html">管理员</a>
+    </nav>
+
+    <script type="module" src="./airdrop.js?v=ag2wua"></script>
+  </body>
+</html>
