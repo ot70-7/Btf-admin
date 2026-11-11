@@ -1,4 +1,9 @@
 import {
+  indexedErrorText,
+  rpcLabel,
+  withIndexedRpc
+} from "./chunk-7WQ2IDZ6.js";
+import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferInstruction
 } from "./chunk-K4SBREAT.js";
@@ -202,11 +207,13 @@ async function loadHolders() {
   try {
     setStatus("\u6B63\u5728\u8BFB\u53D6\u94FE\u4E0A\u6301\u4ED3\uFF0C\u5730\u5740\u591A\u65F6\u53EF\u80FD\u9700\u8981\u51E0\u5341\u79D2\u2026", "info");
     const mint = new PublicKey(state.mint);
-    const accounts = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      commitment: "confirmed",
-      filters: [{ dataSize: 165 }, { memcmp: { offset: 0, bytes: mint.toBase58() } }],
-      dataSlice: { offset: 32, length: 40 }
-    });
+    const { value: accounts, endpoint } = await withIndexedRpc(
+      (rpcConnection) => rpcConnection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+        commitment: "confirmed",
+        filters: [{ dataSize: 165 }, { memcmp: { offset: 0, bytes: mint.toBase58() } }],
+        dataSlice: { offset: 32, length: 40 }
+      })
+    );
     const rows = accounts.map(({ account }) => {
       const data = account.data;
       const owner = encodeBase58(data.subarray(0, 32));
@@ -219,12 +226,9 @@ async function loadHolders() {
       total,
       config.token.decimals
     )} BTF`;
-    setStatus("\u6301\u4ED3\u5DF2\u8BFB\u53D6\uFF0C\u53EF\u8BBE\u7F6E\u7B5B\u9009\u6761\u4EF6\u3002", "ok");
+    setStatus(`\u6301\u4ED3\u5DF2\u8BFB\u53D6\uFF08RPC: ${rpcLabel(endpoint)}\uFF09\uFF0C\u53EF\u8BBE\u7F6E\u7B5B\u9009\u6761\u4EF6\u3002`, "ok");
   } catch (error) {
-    setStatus(
-      `\u8BFB\u53D6\u5931\u8D25\uFF1A${error.message}\u3002\u82E5\u63D0\u793A getProgramAccounts \u4E0D\u53EF\u7528\uFF0C\u8BF7\u6362\u652F\u6301\u8BE5\u65B9\u6CD5\u7684 RPC\uFF08\u7BA1\u7406\u9875\u53EF\u5207\u6362\uFF09\u3002`,
-      "error"
-    );
+    setStatus(`\u8BFB\u53D6\u5931\u8D25\uFF1A${indexedErrorText(error)}`, "error");
   }
 }
 function loadManualList() {
