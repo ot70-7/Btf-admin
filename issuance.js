@@ -1,19 +1,20 @@
 import {
   AuthorityType,
   createSetAuthorityInstruction
-} from "./chunk-5V6NXUKG.js";
+} from "./chunk-IMPSMUIZ.js";
 import {
   createInitializeMint2Instruction,
   createMintToInstruction
-} from "./chunk-F4TPPL4P.js";
-import "./chunk-2IIECPCM.js";
+} from "./chunk-TZ3G3ECG.js";
+import "./chunk-6YHESE6Y.js";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferInstruction
-} from "./chunk-2LXV3LTL.js";
+} from "./chunk-K4SBREAT.js";
 import {
-  createAdminGate
-} from "./chunk-3LL4RXX2.js";
+  createAdminGate,
+  restoreAdminWallet
+} from "./chunk-NSHW2634.js";
 import {
   $,
   MINT_SIZE,
@@ -35,7 +36,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-6SBUITAN.js";
+} from "./chunk-G3HNJYJA.js";
 import {
   Keypair,
   PublicKey,
@@ -79,12 +80,10 @@ function init() {
     config.token.decimals
   )} \xB7 ${config.token.decimals} \u4F4D\u5C0F\u6570${window.__AURA_BUILD__ ? ` \xB7 \u6784\u5EFA ${window.__AURA_BUILD__}` : ""}`;
   renderDistribution();
-  try {
-    const savedUri = localStorage.getItem("btf.metadataUri");
-    if (savedUri && !$("#metadata-uri").value) $("#metadata-uri").value = savedUri;
-  } catch {
-  }
-  $("#metadata-uri").addEventListener("input", (event) => {
+  const metadataInput = $("#metadata-uri");
+  const recommendedUri = config.token.metadataUri || new URL("metadata.json", config.token.website).href;
+  metadataInput.value = recommendedUri;
+  metadataInput.addEventListener("input", (event) => {
     try {
       localStorage.setItem("btf.metadataUri", event.target.value.trim());
     } catch {
@@ -104,6 +103,14 @@ function init() {
   if (detectProviders().length === 0) {
     $("#connect").textContent = "\u5728\u94B1\u5305\u4E2D\u6253\u5F00";
   }
+  restoreSession();
+}
+async function restoreSession() {
+  const wallet = await restoreAdminWallet(gate);
+  if (!wallet) return;
+  state.wallet = wallet;
+  $("#connect").textContent = shorten(wallet.publicKey.toBase58());
+  await refreshWalletStatus();
 }
 function renderDistribution() {
   const decimals = config.token.decimals;
@@ -240,42 +247,62 @@ async function onCreateMint() {
 async function onSetMetadata() {
   if (!requireWallet()) return;
   const mint = currentMint();
-  if (!mint) return toast("\u8BF7\u5148\u521B\u5EFA Mint", "error");
+  if (!mint) return toast("\u8BF7\u5148\u521B\u5EFA\u6216\u586B\u5199 Mint", "error");
   const uri = $("#metadata-uri").value.trim();
   if (!uri) return toast("\u8BF7\u586B\u5199\u5143\u6570\u636E URI", "error");
+  let exists;
+  try {
+    exists = await metadataExists(mint);
+  } catch (error) {
+    return toast(`\u8BFB\u53D6\u5143\u6570\u636E\u5931\u8D25\uFF1A${error.message}`, "error", 9e3);
+  }
+  const action = exists ? "\u8FC1\u79FB" : "\u5199\u5165";
   const confirmed = await reviewTransaction({
-    title: "\u7B2C 2 \u6B65\uFF1A\u5199\u5165\u4EE3\u5E01\u5143\u6570\u636E",
-    subtitle: "\u4F7F\u7528 Metaplex Token Metadata\uFF0C\u94B1\u5305\u3001\u6D4F\u89C8\u5668\u548C\u884C\u60C5\u7AD9\u70B9\u636E\u6B64\u663E\u793A\u540D\u79F0\u3001\u56FE\u6807\u4E0E\u7B80\u4ECB\u3002",
+    title: `\u7B2C 2 \u6B65\uFF1A${action}\u4EE3\u5E01\u5143\u6570\u636E`,
+    subtitle: exists ? "\u68C0\u6D4B\u5230\u73B0\u6709 Metaplex \u5143\u6570\u636E\uFF0C\u5C06\u7531\u5F53\u524D Update Authority \u628A URI \u66F4\u65B0\u5230\u65B0\u5B98\u7F51\u3002" : "\u5C1A\u65E0 Metaplex \u5143\u6570\u636E\uFF0C\u5C06\u521B\u5EFA\u540D\u79F0\u3001\u7B80\u79F0\u3001\u56FE\u6807\u4E0E\u7B80\u4ECB\u3002",
     rows: [
       ["Mint", mint],
       ["\u540D\u79F0", config.token.name],
       ["Ticker", config.token.symbol],
       ["\u5143\u6570\u636E URI", uri],
-      ["\u66F4\u65B0\u6743\u9650", "\u4F60\u7684\u94B1\u5305\uFF08\u53EF\u540E\u7EED\u4FEE\u6539\u7B80\u4ECB\u4E0E\u56FE\u6807\uFF09"]
+      ["\u64CD\u4F5C", exists ? "\u66F4\u65B0\u73B0\u6709\u5143\u6570\u636E\uFF08\u4E0D\u521B\u5EFA\u65B0\u5E01\uFF09" : "\u521B\u5EFA Metaplex \u5143\u6570\u636E"]
     ],
-    risks: ["\u5143\u6570\u636E\u8D26\u6237\u9700\u8981\u5C11\u91CF\u79DF\u91D1\uFF08\u7EA6 0.005 SOL \u91CF\u7EA7\uFF09\u3002", "URI \u5FC5\u987B\u516C\u5F00\u53EF\u8BBF\u95EE\uFF0C\u5426\u5219\u94B1\u5305\u53EA\u663E\u793A\u5730\u5740\u3002"]
+    risks: [
+      "URI \u5FC5\u987B\u516C\u5F00\u53EF\u8BBF\u95EE\uFF0C\u5426\u5219\u94B1\u5305\u53EF\u80FD\u53EA\u663E\u793A\u5730\u5740\u3002",
+      exists ? "\u5FC5\u987B\u7531\u94FE\u4E0A\u8BB0\u5F55\u7684 Update Authority \u94B1\u5305\u7B7E\u540D\u3002" : "\u521B\u5EFA\u5143\u6570\u636E\u9700\u8981\u5C11\u91CF\u79DF\u91D1\uFF08\u7EA6 0.005 SOL \u91CF\u7EA7\uFF09\u3002"
+    ],
+    confirmLabel: exists ? "\u786E\u8BA4\u8FC1\u79FB" : "\u786E\u8BA4\u5199\u5165"
   });
   if (!confirmed) return;
   await withBusy($("#step-metadata"), async () => {
     try {
-      const { buildMetadataInstructions } = await import("./metadata-4FBXGYKW.js");
-      const instructions = buildMetadataInstructions({
+      const { buildMetadataInstructions, buildMetadataUpdateInstructions, readMetadata } = await import("./metadata-SFQXYRPX.js");
+      const params = {
         rpc: connection.rpcEndpoint,
         mint,
         authority: state.wallet.publicKey.toBase58(),
         name: config.token.name,
         symbol: config.token.symbol,
         uri
-      });
+      };
+      const instructions = exists ? buildMetadataUpdateInstructions(params) : buildMetadataInstructions(params);
       const tx = new Transaction().add(...instructions);
       tx.feePayer = state.wallet.publicKey;
       const signature = await signAndSend(connection, tx, state.wallet);
-      toast(`\u5143\u6570\u636E\u5DF2\u5199\u5165\uFF1A${shorten(signature)}`, "ok");
+      const metadata = await readMetadata({ rpc: connection.rpcEndpoint, mint });
+      if (metadata.uri !== uri) throw new Error(`\u94FE\u4E0A URI \u4ECD\u4E3A ${metadata.uri}`);
+      toast(`\u5143\u6570\u636E${action}\u5B8C\u6210\uFF1A${shorten(signature)}`, "ok");
+      setStatus(`\u5143\u6570\u636E\u5DF2${action}\u5230 ${metadata.uri}\uFF0C\u7B80\u79F0\u4FDD\u6301\u4E3A ${metadata.symbol}\u3002`, "ok");
     } catch (error) {
-      if (await metadataExists(mint)) {
-        toast("\u5143\u6570\u636E\u5DF2\u5728\u94FE\u4E0A\uFF08\u94B1\u5305\u62A5\u9519\u4F46\u4EA4\u6613\u5DF2\u751F\u6548\uFF09\uFF0C\u65E0\u9700\u91CD\u590D\u5199\u5165", "ok", 9e3);
-        setStatus("\u5143\u6570\u636E\u5DF2\u5B58\u5728\u4E8E\u94FE\u4E0A\uFF0C\u53EF\u8FDB\u5165\u4E0B\u4E00\u6B65\u3002", "ok");
-        return;
+      try {
+        const { readMetadata } = await import("./metadata-SFQXYRPX.js");
+        const metadata = await readMetadata({ rpc: connection.rpcEndpoint, mint });
+        if (metadata.uri === uri) {
+          toast(`\u5143\u6570\u636E\u5DF2\u5728\u94FE\u4E0A${action}\u5B8C\u6210\uFF08\u94B1\u5305\u8FD4\u56DE\u5F02\u5E38\u4F46\u4EA4\u6613\u5DF2\u751F\u6548\uFF09`, "ok", 9e3);
+          setStatus(`\u5143\u6570\u636E\u5DF2${action}\u5230 ${metadata.uri}\uFF0C\u7B80\u79F0\u4FDD\u6301\u4E3A ${metadata.symbol}\u3002`, "ok");
+          return;
+        }
+      } catch {
       }
       toast(error.message, "error", 9e3);
     }
