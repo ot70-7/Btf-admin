@@ -21,6 +21,7 @@ import {
   getAssociatedTokenAddressSync,
   getConnection,
   parseTokens,
+  readMintSupply,
   readTokenAmountOrZero,
   restoreWallet,
   reviewTransaction,
@@ -30,7 +31,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-G3HNJYJA.js";
+} from "./chunk-ONAMLBMU.js";
 import {
   PublicKey,
   SystemProgram,
@@ -373,7 +374,7 @@ async function refreshAll() {
       loadAllPositions(),
       tokenBalance(pool.rewardVault),
       tokenBalance(pool.principalVault),
-      state.connection.getTokenSupply(new PublicKey(pool.mint), "confirmed").then((r) => BigInt(r.value.amount)).catch(() => 0n)
+      readMintSupply(state.connection, new PublicKey(pool.mint)).then((supply2) => supply2 ?? 0n).catch(() => 0n)
     ]);
     state.positions = positions.value;
     state.positionsEndpoint = positions.endpoint;
