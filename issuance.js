@@ -1,20 +1,20 @@
 import {
   AuthorityType,
   createSetAuthorityInstruction
-} from "./chunk-IMPSMUIZ.js";
+} from "./chunk-62AUFYRB.js";
 import {
   createInitializeMint2Instruction,
   createMintToInstruction
-} from "./chunk-TZ3G3ECG.js";
-import "./chunk-6YHESE6Y.js";
+} from "./chunk-SVCS7MIT.js";
+import "./chunk-IQQJNEIU.js";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferInstruction
-} from "./chunk-K4SBREAT.js";
+} from "./chunk-65ODM5QE.js";
 import {
   createAdminGate,
   restoreAdminWallet
-} from "./chunk-NSHW2634.js";
+} from "./chunk-RH3JLWDI.js";
 import {
   $,
   MINT_SIZE,
@@ -36,7 +36,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-G3HNJYJA.js";
+} from "./chunk-ONAMLBMU.js";
 import {
   Keypair,
   PublicKey,
@@ -92,10 +92,18 @@ function init() {
   try {
     const saved = localStorage.getItem("btf.mint") || config.token.mint;
     if (saved) {
-      state.mintAddress = saved;
-      showMintAddress(new PublicKey(saved));
+      const mint = new PublicKey(saved);
+      state.mintAddress = mint.toBase58();
+      showMintAddress(mint);
     }
   } catch {
+  }
+  const diagnose = $("#diagnose-link");
+  if (diagnose && config.token.website) {
+    try {
+      diagnose.href = new URL("diagnose.html", config.token.website).href;
+    } catch {
+    }
   }
   if (config.network === "mainnet-beta") {
     setStatus("\u5F53\u524D\u914D\u7F6E\u4E3A\u4E3B\u7F51\u3002\u53D1\u884C\u524D\u8BF7\u786E\u8BA4\u4EE3\u5E01\u540D\u79F0\u3001Ticker\u3001\u5143\u6570\u636E URI \u4E0E\u5206\u914D\u94B1\u5305\u90FD\u5DF2\u6838\u5BF9\u3002", "error");
@@ -417,11 +425,10 @@ async function onVerify() {
       const info = await connection.getParsedAccountInfo(mint, "confirmed");
       const parsed = info.value?.data?.parsed?.info;
       if (!parsed) throw new Error("\u65E0\u6CD5\u89E3\u6790 Mint \u8D26\u6237");
-      const supply = await connection.getTokenSupply(mint, "confirmed");
       const rows = [
         ["Mint \u5730\u5740", mint],
         ["\u5C0F\u6570\u4F4D", String(parsed.decimals)],
-        ["\u94FE\u4E0A\u4F9B\u5E94\u91CF", formatTokens(BigInt(supply.value.amount), parsed.decimals)],
+        ["\u94FE\u4E0A\u4F9B\u5E94\u91CF", formatTokens(BigInt(parsed.supply), parsed.decimals)],
         ["Mint Authority", parsed.mintAuthority ?? "\u65E0\uFF08\u5DF2\u64A4\u9500\uFF09"],
         ["Freeze Authority", parsed.freezeAuthority ?? "\u65E0\uFF08\u5DF2\u64A4\u9500\uFF09"],
         ["\u662F\u5426\u5DF2\u64A4\u9500\u589E\u53D1", parsed.mintAuthority ? "\u5426 \u2014\u2014 \u4ECD\u53EF\u589E\u53D1" : "\u662F"],
@@ -462,12 +469,18 @@ function showMintAddress(mint) {
   };
 }
 function currentMint() {
-  if (state.mintAddress) return state.mintAddress;
+  if (state.mintAddress) {
+    try {
+      return new PublicKey(state.mintAddress);
+    } catch {
+      state.mintAddress = null;
+    }
+  }
   const manual = $("#mint-manual").value.trim();
   if (manual) {
     try {
       state.mintAddress = new PublicKey(manual).toBase58();
-      return state.mintAddress;
+      return new PublicKey(state.mintAddress);
     } catch {
       toast("Mint \u5730\u5740\u683C\u5F0F\u4E0D\u6B63\u786E", "error");
     }
