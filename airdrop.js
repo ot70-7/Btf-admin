@@ -1,10 +1,11 @@
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferInstruction
-} from "./chunk-2LXV3LTL.js";
+} from "./chunk-K4SBREAT.js";
 import {
-  createAdminGate
-} from "./chunk-3LL4RXX2.js";
+  createAdminGate,
+  restoreAdminWallet
+} from "./chunk-NSHW2634.js";
 import {
   $,
   TOKEN_PROGRAM_ID,
@@ -25,7 +26,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-6SBUITAN.js";
+} from "./chunk-G3HNJYJA.js";
 import {
   PublicKey,
   Transaction,
@@ -154,6 +155,14 @@ function init() {
     $("#per-wallet-field").classList.toggle("hide", !fixed);
   });
   if (!state.mint) setStatus("\u914D\u7F6E\u4E2D\u6CA1\u6709 Mint \u5730\u5740\uFF0C\u65E0\u6CD5\u53D1\u653E\u3002", "error");
+  restoreSession();
+}
+async function restoreSession() {
+  const wallet = await restoreAdminWallet(gate);
+  if (!wallet) return;
+  state.wallet = wallet;
+  $("#connect").textContent = shorten(wallet.publicKey.toBase58());
+  await refreshSourceBalance();
 }
 async function onConnect() {
   if (detectProviders().length === 0) {
