@@ -17,6 +17,7 @@ import {
   getConnection,
   parseTokens,
   readTokenAmountOrZero,
+  restoreWallet,
   reviewTransaction,
   setStatus,
   shorten,
@@ -24,7 +25,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-6SBUITAN.js";
+} from "./chunk-G3HNJYJA.js";
 import {
   PublicKey,
   SystemProgram,
@@ -333,7 +334,14 @@ async function init() {
   $("#init-pool").addEventListener("click", onInitializePool);
   $("#network-badge").textContent = config.network === "mainnet-beta" ? "\u4E3B\u7F51" : config.network;
   renderInitForm();
+  await restoreSession();
   await refreshAll();
+}
+async function restoreSession() {
+  const wallet = await restoreWallet();
+  if (!wallet) return;
+  state.wallet = wallet;
+  $("#connect").textContent = shorten(wallet.publicKey.toBase58());
 }
 async function onConnect() {
   if (detectProviders().length === 0) {
