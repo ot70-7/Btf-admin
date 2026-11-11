@@ -1,4 +1,9 @@
 import {
+  indexedErrorText,
+  rpcLabel,
+  withIndexedRpc
+} from "./chunk-7WQ2IDZ6.js";
+import {
   $,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Reader,
@@ -190,20 +195,13 @@ async function fetchPool(connection) {
   return info ? decodePool(poolPda().toBase58(), info.data) : null;
 }
 async function fetchAllPositions(connection) {
-  try {
-    const accounts = await connection.getProgramAccounts(programId(), {
-      commitment: "confirmed",
-      filters: [
-        { memcmp: { offset: 0, bytes: encodeBase58(discriminator(ACCOUNT.position)) } }
-      ]
-    });
-    return {
-      supported: true,
-      positions: accounts.map(({ pubkey, account }) => decodePosition(pubkey.toBase58(), account.data))
-    };
-  } catch (error) {
-    return { supported: false, positions: [], error: error.message };
-  }
+  const accounts = await connection.getProgramAccounts(programId(), {
+    commitment: "confirmed",
+    filters: [
+      { memcmp: { offset: 0, bytes: encodeBase58(discriminator(ACCOUNT.position)) } }
+    ]
+  });
+  return accounts.map(({ pubkey, account }) => decodePosition(pubkey.toBase58(), account.data));
 }
 function parseEvents(logs) {
   const events = [];
@@ -307,7 +305,8 @@ var state = {
   wallet: null,
   pool: null,
   positions: [],
-  positionsSupported: true,
+  positionsEndpoint: null,
+  positionsError: null,
   rewardBalance: 0n,
   principalBalance: 0n,
   supply: 0n,
@@ -371,13 +370,14 @@ async function refreshAll() {
     }
     $("#init-card").classList.add("hide");
     const [positions, rewardBalance, principalBalance, supply] = await Promise.all([
-      fetchAllPositions(state.connection),
+      loadAllPositions(),
       tokenBalance(pool.rewardVault),
       tokenBalance(pool.principalVault),
       state.connection.getTokenSupply(new PublicKey(pool.mint), "confirmed").then((r) => BigInt(r.value.amount)).catch(() => 0n)
     ]);
-    state.positions = positions.positions;
-    state.positionsSupported = positions.supported;
+    state.positions = positions.value;
+    state.positionsEndpoint = positions.endpoint;
+    state.positionsError = positions.error;
     state.rewardBalance = rewardBalance;
     state.principalBalance = principalBalance;
     state.supply = supply;
@@ -401,6 +401,14 @@ async function tokenBalance(address) {
     return await readTokenAmountOrZero(state.connection, new PublicKey(address));
   } catch {
     return 0n;
+  }
+}
+async function loadAllPositions() {
+  try {
+    const { value, endpoint } = await withIndexedRpc((connection) => fetchAllPositions(connection));
+    return { value, endpoint, error: null };
+  } catch (error) {
+    return { value: [], endpoint: null, error };
   }
 }
 function renderStats() {
@@ -498,7 +506,7 @@ function renderPositionsTable() {
       )
     )
   );
-  $("#positions-note").textContent = !state.positionsSupported ? "\u5F53\u524D RPC \u4E0D\u5141\u8BB8 getProgramAccounts\uFF0C\u65E0\u6CD5\u5217\u51FA\u5168\u90E8\u4ED3\u4F4D\u3002\u8BF7\u70B9\u4E0B\u65B9\u6309\u94AE\u6362\u6210\u652F\u6301\u8BE5\u65B9\u6CD5\u7684 RPC\u3002" : list.length === 0 ? "\u6682\u65E0\u4ED3\u4F4D\u3002" : `\u663E\u793A ${list.length} / ${state.positions.length} \u4E2A\u4ED3\u4F4D\uFF08\u6309\u94FE\u4E0A\u8D26\u6237\u987A\u5E8F\uFF09\u3002`;
+  $("#positions-note").textContent = state.positionsError ? `\u8BFB\u53D6\u4ED3\u4F4D\u5931\u8D25\uFF1A${indexedErrorText(state.positionsError)}\u3002\u53EF\u5728\u4E0A\u65B9\u300CRPC \u8BBE\u7F6E\u300D\u586B\u5165\u53EF\u7528\u7AEF\u70B9\u540E\u91CD\u8BD5\u3002` : list.length === 0 ? "\u6682\u65E0\u4ED3\u4F4D\u3002" : `\u663E\u793A ${list.length} / ${state.positions.length} \u4E2A\u4ED3\u4F4D\uFF08\u6309\u94FE\u4E0A\u8D26\u6237\u987A\u5E8F\uFF09${state.positionsEndpoint && state.positionsEndpoint !== state.connection.rpcEndpoint ? `\uFF0C\u6570\u636E\u6765\u81EA\u5907\u7528 RPC ${rpcLabel(state.positionsEndpoint)}` : ""}\u3002`;
 }
 async function loadActivity() {
   const host = $("#activity");
