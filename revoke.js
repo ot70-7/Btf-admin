@@ -1,12 +1,12 @@
 import {
   AuthorityType,
   createSetAuthorityInstruction
-} from "./chunk-IMPSMUIZ.js";
-import "./chunk-6YHESE6Y.js";
+} from "./chunk-62AUFYRB.js";
+import "./chunk-IQQJNEIU.js";
 import {
   createAdminGate,
   restoreAdminWallet
-} from "./chunk-NSHW2634.js";
+} from "./chunk-RH3JLWDI.js";
 import {
   $,
   chooseWallet,
@@ -21,7 +21,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-G3HNJYJA.js";
+} from "./chunk-ONAMLBMU.js";
 import {
   PublicKey,
   Transaction,
@@ -159,5 +159,6 @@ async function revoke(kind) {
       );
     }
   });
+  await refreshAuthorities();
 }
 //# sourceMappingURL=revoke.js.map
