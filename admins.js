@@ -4,6 +4,10 @@ import {
 } from "./chunk-TZ3G3ECG.js";
 import "./chunk-6YHESE6Y.js";
 import {
+  indexedErrorText,
+  withIndexedRpc
+} from "./chunk-7WQ2IDZ6.js";
+import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferInstruction
 } from "./chunk-K4SBREAT.js";
@@ -106,14 +110,16 @@ async function refresh() {
   $("#init-card").classList.add("hide");
   $("#add-card").classList.remove("hide");
   try {
-    const accounts = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      commitment: "confirmed",
-      filters: [
-        { dataSize: 165 },
-        { memcmp: { offset: 0, bytes: state.passMint } }
-      ],
-      dataSlice: { offset: 32, length: 40 }
-    });
+    const { value: accounts } = await withIndexedRpc(
+      (rpcConnection) => rpcConnection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+        commitment: "confirmed",
+        filters: [
+          { dataSize: 165 },
+          { memcmp: { offset: 0, bytes: state.passMint } }
+        ],
+        dataSlice: { offset: 32, length: 40 }
+      })
+    );
     const holders = /* @__PURE__ */ new Map();
     for (const { account } of accounts) {
       const owner = encodeBase58(account.data.subarray(0, 32));
@@ -148,7 +154,7 @@ async function refresh() {
     $("#admin-rows").replaceChildren(...rows);
     setStatus("\u7BA1\u7406\u5458\u5217\u8868\u5DF2\u66F4\u65B0\u3002", "ok");
   } catch (error) {
-    setStatus(`\u8BFB\u53D6\u51ED\u8BC1\u6301\u6709\u4EBA\u5931\u8D25\uFF1A${error.message}`, "error");
+    setStatus(`\u8BFB\u53D6\u51ED\u8BC1\u6301\u6709\u4EBA\u5931\u8D25\uFF1A${indexedErrorText(error)}`, "error");
   }
 }
 async function createPass() {
