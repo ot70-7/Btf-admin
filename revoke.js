@@ -1,11 +1,12 @@
 import {
   AuthorityType,
   createSetAuthorityInstruction
-} from "./chunk-5V6NXUKG.js";
-import "./chunk-2IIECPCM.js";
+} from "./chunk-IMPSMUIZ.js";
+import "./chunk-6YHESE6Y.js";
 import {
-  createAdminGate
-} from "./chunk-3LL4RXX2.js";
+  createAdminGate,
+  restoreAdminWallet
+} from "./chunk-NSHW2634.js";
 import {
   $,
   chooseWallet,
@@ -20,7 +21,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-6SBUITAN.js";
+} from "./chunk-G3HNJYJA.js";
 import {
   PublicKey,
   Transaction,
@@ -57,6 +58,13 @@ function init() {
     setStatus(walletHint(), "error");
   }
   refreshAuthorities();
+  restoreSession();
+}
+async function restoreSession() {
+  const wallet = await restoreAdminWallet(gate);
+  if (!wallet) return;
+  state.wallet = wallet;
+  $("#connect").textContent = shorten(wallet.publicKey.toBase58());
 }
 async function refreshAuthorities() {
   try {
