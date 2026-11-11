@@ -1,18 +1,19 @@
 import {
   createInitializeMint2Instruction,
   createMintToInstruction
-} from "./chunk-F4TPPL4P.js";
-import "./chunk-2IIECPCM.js";
+} from "./chunk-TZ3G3ECG.js";
+import "./chunk-6YHESE6Y.js";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferInstruction
-} from "./chunk-2LXV3LTL.js";
+} from "./chunk-K4SBREAT.js";
 import {
   adminList,
   adminPassMint,
   createAdminGate,
-  rememberAdminPass
-} from "./chunk-3LL4RXX2.js";
+  rememberAdminPass,
+  restoreAdminWallet
+} from "./chunk-NSHW2634.js";
 import {
   $,
   MINT_SIZE,
@@ -31,7 +32,7 @@ import {
   toast,
   walletHint,
   withBusy
-} from "./chunk-6SBUITAN.js";
+} from "./chunk-G3HNJYJA.js";
 import {
   Keypair,
   PublicKey,
@@ -59,6 +60,13 @@ function init() {
   $("#init-pass").addEventListener("click", () => withBusy($("#init-pass"), createPass));
   $("#add-admin").addEventListener("click", () => withBusy($("#add-admin"), addAdmin));
   $("#refresh").addEventListener("click", () => withBusy($("#refresh"), refresh));
+  restoreSession();
+}
+async function restoreSession() {
+  const wallet = await restoreAdminWallet(gate);
+  if (!wallet) return;
+  state.wallet = wallet;
+  $("#connect").textContent = shorten(wallet.publicKey.toBase58());
 }
 async function onConnect() {
   if (detectProviders().length === 0) {
